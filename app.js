@@ -1,4 +1,4 @@
-const  API_KEY = "ft_futebol__e28d32861c78bb9f0d1deaba2d2b87e3fc8a0948";
+const  API_KEY = "ft_futebol__83c76791ddc35004cc288f8b07939214fce31059";
 const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
 
 let cache = null;
