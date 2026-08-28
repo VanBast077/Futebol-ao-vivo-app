@@ -1,4 +1,4 @@
-const API_KEY = "ft_futebol__e28d32861c78bb9f0d1deaba2d2b87e3fc8a0948";
+onst  API_KEY = "ft_futebol__e28d32861c78bb9f0d1deaba2d2b87e3fc8a0948";
 const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
 
 function pegarLista(r){ 
@@ -25,6 +25,18 @@ function renderizar(lista){
   }
   div.innerHTML = "";
   lista.slice(0,15).forEach(j=>{
+    const jogosReais = lista.filter(j => {
+  const gols = (j.goals?.home || 0) + (j.goals?.away || 0);
+  const minuto = j.fixture?.status?.elapsed || j.minute || 0;
+  return gols > 0 || minuto > 0;
+});
+
+if(jogosReais.length === 0){
+  document.getElementById("jogos-ao-vivo").innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.<br>Os jogos do Brasileirão começam às 16h!</p>";
+  return;
+}
+
+jogosReais.slice(0,15).forEach(j=>{
     const casa = nomeTime(j.teams?.home || j.homeTeam || j.home);
     const fora = nomeTime(j.teams?.away || j.awayTeam || j.away);
     const golCasa = j.goals?.home ?? j.score?.home ?? 0;
