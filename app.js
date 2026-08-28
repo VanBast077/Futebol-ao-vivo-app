@@ -19,24 +19,26 @@ let cache = null;
 
 function renderizar(lista){
   const div = document.getElementById("jogos-ao-vivo");
+  
+  // FILTRA SÓ JOGOS REAIS (com gol ou minuto)
+  const jogosReais = lista.filter(j => {
+    const gols = (j.goals?.home || 0) + (j.goals?.away || 0);
+    const minuto = j.fixture?.status?.elapsed || j.minute || 0;
+    return gols > 0 || minuto > 0;
+  });
+
+  if(jogosReais.length === 0){
+    div.innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.<br>Os jogos do Brasileirão começam às 16h!</p>";
+    return;
+  }
+
   if(lista.length === 0){
     div.innerHTML = "<p>Nenhum jogo ao vivo agora.</p>";
     return;
   }
+
   div.innerHTML = "";
-  lista.slice(0,15).forEach(j=>{
-    const jogosReais = lista.filter(j => {
-  const gols = (j.goals?.home || 0) + (j.goals?.away || 0);
-  const minuto = j.fixture?.status?.elapsed || j.minute || 0;
-  return gols > 0 || minuto > 0;
-});
-
-if(jogosReais.length === 0){
-  document.getElementById("jogos-ao-vivo").innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.<br>Os jogos do Brasileirão começam às 16h!</p>";
-  return;
-}
-
-jogosReais.slice(0,15).forEach(j=>{
+  jogosReais.slice(0,15).forEach(j=>{
     const casa = nomeTime(j.teams?.home || j.homeTeam || j.home);
     const fora = nomeTime(j.teams?.away || j.awayTeam || j.away);
     const golCasa = j.goals?.home ?? j.score?.home ?? 0;
@@ -68,3 +70,4 @@ async function buscarJogos(){
 }
 buscarJogos();
 setInterval(buscarJogos, 45000);
+
