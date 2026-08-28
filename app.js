@@ -1,5 +1,7 @@
-onst  API_KEY = "ft_futebol__e28d32861c78bb9f0d1deaba2d2b87e3fc8a0948";
+const  API_KEY = "ft_futebol__e28d32861c78bb9f0d1deaba2d2b87e3fc8a0948";
 const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
+
+let cache = null;
 
 function pegarLista(r){ 
   if(Array.isArray(r)) return r; 
@@ -8,19 +10,18 @@ function pegarLista(r){
   if(r?.response) return r.response; 
   return []; 
 }
+
 function nomeTime(t){
   if(!t) return "Time";
   if(typeof t === 'string') return t;
-  if(typeof t === 'object') return t.name || t.shortName || t.team?.name || "Time";
+  if(typeof t === 'object') return t.name || t.shortName || t.displayName || t.team?.name || "Time";
   return String(t);
 }
 
-let cache = null;
-
 function renderizar(lista){
   const div = document.getElementById("jogos-ao-vivo");
-  
-  // FILTRA SÓ JOGOS REAIS (com gol ou minuto)
+  const divProx = document.getElementById("proximos-jogos");
+
   const jogosReais = lista.filter(j => {
     const gols = (j.goals?.home || 0) + (j.goals?.away || 0);
     const minuto = j.fixture?.status?.elapsed || j.minute || 0;
@@ -28,12 +29,8 @@ function renderizar(lista){
   });
 
   if(jogosReais.length === 0){
-    div.innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.<br>Os jogos do Brasileirão começam às 16h!</p>";
-    return;
-  }
-
-  if(lista.length === 0){
-    div.innerHTML = "<p>Nenhum jogo ao vivo agora.</p>";
+    div.innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.<br>Volte às 16h para o Brasileirão!</p>";
+    divProx.innerHTML = `<p>Atualizado • ${new Date().toLocaleTimeString('pt-BR')}</p>`;
     return;
   }
 
@@ -50,13 +47,16 @@ function renderizar(lista){
         <div style="text-align:right"><div class="placar">${golCasa} - ${golFora}</div><div class="status">${minuto ? minuto + "'" : ""} AO VIVO</div></div>
       </div>`;
   });
-  document.getElementById("proximos-jogos").innerHTML = `<p>Atualizado • ${new Date().toLocaleTimeString('pt-BR')}</p>`;
+  divProx.innerHTML = `<p>Atualizado • ${new Date().toLocaleTimeString('pt-BR')}</p>`;
 }
 
 async function buscarJogos(){
   const divAoVivo = document.getElementById("jogos-ao-vivo");
-  if(cache) renderizar(cache);
-  else divAoVivo.innerHTML = "<p>⚽ Carregando...</p>";
+  if(cache){
+    renderizar(cache);
+  } else {
+    divAoVivo.innerHTML = "<p>⚽ Carregando...</p>";
+  }
 
   try{
     const resp = await fetch(`${BASE_URL}?live=true`,{ headers:{ "X-API-Key": API_KEY }});
@@ -65,9 +65,10 @@ async function buscarJogos(){
     cache = lista;
     renderizar(lista);
   }catch(e){
-    divAoVivo.innerHTML = `<p>Erro de conexão</p>`;
+    console.error(e);
+    divAoVivo.innerHTML = `<p>Erro: ${e.message}<br>Verifique sua API Key</p>`;
   }
 }
+
 buscarJogos();
 setInterval(buscarJogos, 45000);
-
