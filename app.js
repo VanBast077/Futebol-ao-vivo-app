@@ -3,38 +3,48 @@ const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
 
 async function buscarJogos() {
   const divAoVivo = document.getElementById("jogos-ao-vivo");
-  const divProximos = document.getElementById("proximos-jogos");
+  const hoje = new Date().toISOString().split('T')[0];
+
   try {
-    console.log("Buscando com chave:", API_KEY.substring(0,10) + "...");
-    
-    const resp = await fetch(`${BASE_URL}?date=2025-05-13`, {
+    // Tenta ao vivo
+    const resp = await fetch(`${BASE_URL}?live=true`, {
       headers: { "X-API-Key": API_KEY }
     });
-    
-    if (!resp.ok) throw new Error("Erro API: " + resp.status);
-    
     const dados = await resp.json();
-    console.log(dados);
 
-    // Mostra o que veio, mesmo que não seja ao vivo
     if (dados && dados.length > 0) {
       divAoVivo.innerHTML = "";
-      dados.slice(0, 5).forEach(j => {
+      dados.forEach(j => {
         divAoVivo.innerHTML += `
           <div class="jogo">
             <div><div class="time">${j.teams?.home?.name}</div><div class="time">${j.teams?.away?.name}</div></div>
-            <div><div class="placar">${j.goals?.home ?? 0} - ${j.goals?.away ?? 0}</div><div class="status">AO VIVO</div></div>
+            <div><div class="placar">${j.goals?.home?? 0} - ${j.goals?.away?? 0}</div><div class="status">${j.fixture?.status?.elapsed || 0}' AO VIVO</div></div>
           </div>`;
       });
-      divProximos.innerHTML = "<p>Jogos de teste carregados com sucesso!</p>";
     } else {
-      divAoVivo.innerHTML = "<p>Nenhum jogo encontrado para teste. API conectada!</p>";
-      divProximos.innerHTML = "<p>API conectada, mas sem jogos hoje.</p>";
+      // Se não tem ao vivo, busca jogos de hoje
+      const respHoje = await fetch(`${BASE_URL}?date=${hoje}`, {
+        headers: { "X-API-Key": API_KEY }
+      });
+      const jogosHoje = await respHoje.json();
+      divAoVivo.innerHTML = "";
+      if(jogosHoje.length === 0){
+        divAoVivo.innerHTML = "<p>Nenhum jogo ao vivo agora. Volte mais tarde!</p>";
+      } else {
+        jogosHoje.slice(0,8).forEach(j => {
+          const hora = new Date(j.fixture?.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+          divAoVivo.innerHTML += `
+          <div class="jogo">
+            <div><div class="time">${j.teams?.home?.name}</div><div class="time">${j.teams?.away?.name}</div></div>
+            <div><div class="placar">${hora}</div><div class="status">${j.fixture?.status?.short || ''}</div></div>
+          </div>`;
+        });
+      }
     }
+    document.getElementById("proximos-jogos").innerHTML = "<p>Atualizado em tempo real via KickoffAPI</p>";
 
   } catch (e) {
-    console.error(e);
-    divAoVivo.innerHTML = `<p>Erro: ${e.message}. Verifique a API Key no app.js</p>`;
+    divAoVivo.innerHTML = `<p>Erro ao carregar: ${e.message}</p>`;
   }
 }
 buscarJogos();
