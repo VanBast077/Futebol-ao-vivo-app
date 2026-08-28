@@ -1,64 +1,54 @@
 const API_KEY = "ft_futebol__8c281769d426a15f5be8068e4f75367b948c589d";
 const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
 
-function pegarLista(resposta) {
-  if (Array.isArray(resposta)) return resposta;
-  if (resposta.data) return resposta.data;
-  if (resposta.fixtures) return resposta.fixtures;
-  if (resposta.response) return resposta.response;
-  return [];
+function pegarLista(r){ if(Array.isArray(r)) return r; if(r?.data) return r.data; if(r?.fixtures) return r.fixtures; if(r?.response) return r.response; return []; }
+function nomeTime(t){
+  if(!t) return "Time";
+  if(typeof t === 'string') return t;
+  if(typeof t === 'object') return t.name || t.shortName || t.displayName || t.team?.name || "Time";
+  return String(t);
 }
 
-async function buscarJogos() {
+async function buscarJogos(){
   const divAoVivo = document.getElementById("jogos-ao-vivo");
   const divProximos = document.getElementById("proximos-jogos");
-  const hoje = new Date().toISOString().split('T')[0];
-
-  try {
-    const respLive = await fetch(`${BASE_URL}?live=true`, {
-      headers: { "X-API-Key": API_KEY }
-    });
-    const jsonLive = await respLive.json();
-    let listaLive = pegarLista(jsonLive);
-
-    if (listaLive.length > 0) {
-      divAoVivo.innerHTML = "";
-      listaLive.slice(0,10).forEach(j => {
-        divAoVivo.innerHTML += `
-          <div class="jogo">
-            <div><div class="time">${j.teams?.home?.name || j.homeTeam || 'Casa'}</div><div class="time">${j.teams?.away?.name || j.awayTeam || 'Fora'}</div></div>
-            <div><div class="placar">${j.goals?.home?? j.score?.home?? 0} - ${j.goals?.away?? j.score?.away?? 0}</div><div class="status">AO VIVO</div></div>
-          </div>`;
-      });
-      divProximos.innerHTML = "<p>Jogos ao vivo atualizados agora!</p>";
+  try{
+    const resp = await fetch(`${BASE_URL}?live=true`,{ headers:{ "X-API-Key": API_KEY }});
+    const json = await resp.json();
+    console.log("API:", json);
+    let lista = pegarLista(json);
+    
+    if(lista.length === 0){
+      divAoVivo.innerHTML = "<p>Nenhum jogo ao vivo agora. Volte mais tarde!</p>";
+      divProximos.innerHTML = "<p>Sem jogos ao vivo no momento.</p>";
       return;
     }
-
-    // Se não tem ao vivo, busca de hoje
-    const respHoje = await fetch(`${BASE_URL}?date=${hoje}`, {
-      headers: { "X-API-Key": API_KEY }
-    });
-    const jsonHoje = await respHoje.json();
-    let listaHoje = pegarLista(jsonHoje);
-
+    
     divAoVivo.innerHTML = "";
-    if (listaHoje.length === 0) {
-      divAoVivo.innerHTML = "<p>Nenhum jogo ao vivo agora. Volte mais tarde!</p>";
-    } else {
-      listaHoje.slice(0,10).forEach(j => {
-        const hora = j.fixture?.date? new Date(j.fixture.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : (j.time || '');
-        divAoVivo.innerHTML += `
-          <div class="jogo">
-            <div><div class="time">${j.teams?.home?.name || j.homeTeam}</div><div class="time">${j.teams?.away?.name || j.awayTeam}</div></div>
-            <div><div class="placar">${hora}</div><div class="status">Hoje</div></div>
-          </div>`;
-      });
-    }
-    divProximos.innerHTML = "<p>Jogos de hoje carregados!</p>";
-
-  } catch (e) {
+    lista.slice(0,15).forEach(j=>{
+      const casa = nomeTime(j.teams?.home || j.homeTeam || j.home);
+      const fora = nomeTime(j.teams?.away || j.awayTeam || j.away);
+      const golCasa = j.goals?.home ?? j.score?.home ?? j.goals?.homeTeam ?? 0;
+      const golFora = j.goals?.away ?? j.score?.away ?? j.goals?.awayTeam ?? 0;
+      const minuto = j.fixture?.status?.elapsed || j.minute || j.status || "AO VIVO";
+      
+      divAoVivo.innerHTML += `
+        <div class="jogo">
+          <div>
+            <div class="time">${casa}</div>
+            <div class="time">${fora}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="placar">${golCasa} - ${golFora}</div>
+            <div class="status">${minuto}' AO VIVO</div>
+          </div>
+        </div>`;
+    });
+    divProximos.innerHTML = "<p>Atualizado agora • " + new Date().toLocaleTimeString('pt-BR') + "</p>";
+  }catch(e){
     console.error(e);
     divAoVivo.innerHTML = `<p>Erro: ${e.message}</p>`;
   }
 }
 buscarJogos();
+setInterval(buscarJogos, 30000); // atualiza a cada 30s
