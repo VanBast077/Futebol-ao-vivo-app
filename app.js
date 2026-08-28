@@ -1,40 +1,40 @@
 const API_KEY = "ft_futebol__8c281769d426a15f5be8068e4f75367b948c589d";
-const API_URL = "https://api.kickoffapi.com/api/v1/fixtures?live=true";
+const BASE_URL = "https://api.kickoffapi.com/api/v1/fixtures";
 
-async function buscarJogosAoVivo() {
+async function buscarJogos() {
+  const divAoVivo = document.getElementById("jogos-ao-vivo");
+  const divProximos = document.getElementById("proximos-jogos");
   try {
-    const resposta = await fetch(API_URL, {
-      headers: {
-        "X-API-Key": API_KEY
-      }
+    console.log("Buscando com chave:", API_KEY.substring(0,10) + "...");
+    
+    const resp = await fetch(`${BASE_URL}?date=2025-05-13`, {
+      headers: { "X-API-Key": API_KEY }
     });
     
-    const dados = await resposta.json();
-    console.log(dados); // para ver no console
+    if (!resp.ok) throw new Error("Erro API: " + resp.status);
+    
+    const dados = await resp.json();
+    console.log(dados);
 
-    const container = document.getElementById("jogos");
-    if (!container) return;
-
-    if (!dados || dados.length === 0) {
-      container.innerHTML = "<p>Nenhum jogo ao vivo no momento.</p>";
-      return;
+    // Mostra o que veio, mesmo que não seja ao vivo
+    if (dados && dados.length > 0) {
+      divAoVivo.innerHTML = "";
+      dados.slice(0, 5).forEach(j => {
+        divAoVivo.innerHTML += `
+          <div class="jogo">
+            <div><div class="time">${j.teams?.home?.name}</div><div class="time">${j.teams?.away?.name}</div></div>
+            <div><div class="placar">${j.goals?.home ?? 0} - ${j.goals?.away ?? 0}</div><div class="status">AO VIVO</div></div>
+          </div>`;
+      });
+      divProximos.innerHTML = "<p>Jogos de teste carregados com sucesso!</p>";
+    } else {
+      divAoVivo.innerHTML = "<p>Nenhum jogo encontrado para teste. API conectada!</p>";
+      divProximos.innerHTML = "<p>API conectada, mas sem jogos hoje.</p>";
     }
 
-    container.innerHTML = "";
-    dados.forEach(jogo => {
-      const card = `
-        <div style="background:#1a1a1a; color:white; padding:15px; margin:10px; border-radius:10px;">
-          <h3>${jogo.teams?.home?.name || 'Casa'} ${jogo.goals?.home ?? 0} x ${jogo.goals?.away ?? 0} ${jogo.teams?.away?.name || 'Fora'}</h3>
-          <p>⏱️ ${jogo.fixture?.status?.elapsed || 0}' - ${jogo.fixture?.status?.long || 'Ao Vivo'}</p>
-          <p>🏆 ${jogo.league?.name || ''}</p>
-        </div>
-      `;
-      container.innerHTML += card;
-    });
-
-  } catch (erro) {
-    console.error("Erro ao buscar jogos:", erro);
+  } catch (e) {
+    console.error(e);
+    divAoVivo.innerHTML = `<p>Erro: ${e.message}. Verifique a API Key no app.js</p>`;
   }
 }
-
-buscarJogosAoVivo();
+buscarJogos();
