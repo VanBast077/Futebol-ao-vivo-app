@@ -42,9 +42,15 @@ function renderizar(lista){
     const golFora = j.goals?.away ?? j.score?.away ?? 0;
     const minuto = j.fixture?.status?.elapsed || j.minute || "";
     div.innerHTML += `
-      <div class="jogo">
-        <div><div class="time">${casa}</div><div class="time">${fora}</div></div>
-        <div style="text-align:right"><div class="placar">${golCasa} - ${golFora}</div><div class="status">${minuto ? minuto + "'" : ""} AO VIVO</div></div>
+      <div class="jogo" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; width:100%;">
+          <div><div class="time">${casa}</div><div class="time">${fora}</div></div>
+          <div style="text-align:right"><div class="placar">${golCasa} - ${golFora}</div><div class="status">${minuto ? minuto + "'" : ""} AO VIVO 🔴</div></div>
+        </div>
+        <a href="assistir.html?id=3nJN6ljCXHQ" 
+           style="background:#ff0000; color:white; padding:10px; border-radius:8px; text-decoration:none; display:block; text-align:center; font-weight:bold; margin-top:10px;">
+           ▶️ ASSISTIR DENTRO DO APP
+        </a>
       </div>`;
   });
   divProx.innerHTML = `<p>Atualizado • ${new Date().toLocaleTimeString('pt-BR')}</p>`;
