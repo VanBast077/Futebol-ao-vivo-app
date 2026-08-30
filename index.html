@@ -1,38 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futebol ao Vivo</title>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d47a1">
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futebol ao Vivo</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:#f2f2f2;margin:0;font-family:sans-serif}
+.topo{background:#0b57d0;color:#fff;text-align:center;padding:20px}
+.card{background:#fff;margin:15px;border-radius:15px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.jogo{background:#111;color:#fff;padding:12px;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;flex-direction:column}
+.placar{font-weight:bold;font-size:18px}
+.status{color:#ff4444;font-size:12px}
+.btn{ background:#ff0000; color:white; padding:12px; border-radius:8px; text-decoration:none; display:block; text-align:center; font-weight:bold; margin-top:10px;}
+</style>
 </head>
 <body>
+<div class="topo"><h1 style="margin:0">⚽ Futebol ao Vivo</h1><p style="margin:5px 0 0">Placar e resultados em tempo real</p></div>
 
-<header>
-    <h1>⚽ Futebol ao Vivo</h1>
-    <p>Placar e resultados em tempo real</p>
-</header>
-
-<div class="container">
-
-    <div class="card">
-        <h2>🔴 Jogos ao Vivo</h2>
-        <div id="jogos-ao-vivo">
-            <p>Carregando jogos ao vivo...</p>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>📅 Próximos jogos</h2>
-        <div id="proximos-jogos">
-            <p>Carregando próximos jogos...</p>
-        </div>
-    </div>
-
+<div class="card">
+<h2>🔴 Jogos ao Vivo</h2>
+<div id="jogos-ao-vivo"><p>Carregando jogos ao vivo...</p></div>
 </div>
-<script src="config.js"></script>
+
+<div class="card">
+<h2>📅 Próximos jogos</h2>
+<div id="proximos-jogos"><p>Carregando próximos jogos...</p></div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
