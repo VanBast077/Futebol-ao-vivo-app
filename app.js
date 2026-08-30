@@ -1,68 +1,84 @@
-let jogosCache = [];
+let jogos = [];
 
-async function carregar() {
-  const divAoVivo = document.getElementById("jogos-ao-vivo");
-  const divProx = document.getElementById("proximos-jogos");
-
+async function buscar() {
   try {
-    const resp = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/bra.1/scoreboard");
-    const dados = await resp.json();
-    const eventos = dados.events || [];
+    const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/bra.1/scoreboard?limit=20");
+    const d = await r.json();
 
-    jogosCache = eventos.filter(j => j.status.type.state === 'in').map(j => {
-      const comp = j.competitions[0];
-      const casa = comp.competitors.find(c => c.homeAway === 'home');
-      const fora = comp.competitors.find(c => c.homeAway === 'away');
-      // Pega o minuto real
-      const minutoBase = parseInt(j.status.displayClock?.split(':')[0]) || parseInt(j.status.type.detail) || 0;
-      return {
-        id: j.id,
-        casa: casa.team.displayName,
-        fora: fora.team.displayName,
-        placar: `${casa.score} - ${fora.score}`,
-        minuto: minutoBase,
-        inicio: Date.now()
-      };
+    // Pega só ao vivo
+    const aoVivo = d.events.filter(e => e.status.type.state === 'in');
+
+    // Atualiza lista mantendo o relogio
+    aoVivo.forEach(ev => {
+      const comp = ev.competitions[0];
+      const casa = comp.competitors[0];
+      const fora = comp.competitors[1];
+
+      // A ESPN manda o tempo assim: "2'" ou "0'" - vamos pegar o numero
+      let min = 0;
+      const txt = ev.status.type.detail || ev.status.displayClock || "0'";
+      const m = txt.match(/(\d+)/);
+      if(m) min = parseInt(m[0]);
+
+      let existente = jogos.find(j => j.id === ev.id);
+      if(existente){
+        existente.placar = `${casa.score} - ${fora.score}`;
+        existente.casa = casa.team.displayName;
+        existente.fora = fora.team.displayName;
+        // Se o minuto da API aumentou, atualiza
+        if(min > existente.minBase) {
+          existente.minBase = min;
+          existente.inicio = Date.now();
+        }
+      } else {
+        jogos.push({
+          id: ev.id,
+          casa: casa.team.displayName,
+          fora: fora.team.displayName,
+          placar: `${casa.score} - ${fora.score}`,
+          minBase: min,
+          inicio: Date.now()
+        });
+      }
     });
 
-    renderizar();
+    // Remove jogos que acabaram
+    jogos = jogos.filter(j => aoVivo.some(a => a.id === j.id));
 
+    desenhar();
   } catch(e){
-    divAoVivo.innerHTML = `<p>Erro: ${e.message}</p>`;
+    console.log(e);
   }
 }
 
-function renderizar(){
-  const divAoVivo = document.getElementById("jogos-ao-vivo");
-  const divProx = document.getElementById("proximos-jogos");
+function desenhar(){
+  const div = document.getElementById("jogos-ao-vivo");
+  const div2 = document.getElementById("proximos-jogos");
 
-  if(jogosCache.length === 0){
-    divAoVivo.innerHTML = "<p>⚽ Nenhum jogo ao vivo agora.</p>";
-    divProx.innerHTML = `<p>✅ Brasileirão atualizado!<br><span style="color:#888;font-size:12px">Atualizado: ${new Date().toLocaleTimeString('pt-BR')}</span></p>`;
+  if(jogos.length === 0){
+    div.innerHTML = "<p>⚽ Nenhum ao vivo agora</p>";
     return;
   }
 
   let html = "";
-  jogosCache.forEach(j => {
-    // Calcula minuto atual (adiciona tempo desde que carregou)
-    const minutosPassados = Math.floor((Date.now() - j.inicio) / 60000);
-    const minutoAtual = j.minuto + minutosPassados;
+  jogos.forEach(j => {
+    const passou = Math.floor((Date.now() - j.inicio)/60000);
+    const atual = j.minBase + passou;
 
     html += `
-    <div style="background:#111; color:#fff; padding:12px; border-radius:12px; margin-bottom:12px;">
-      <div style="display:flex; justify-content:space-between;">
-        <div><div style="font-weight:bold">${j.casa}</div><div style="font-weight:bold">${j.fora}</div></div>
-        <div style="text-align:right"><div style="font-weight:bold; font-size:18px;">${j.placar}</div><div style="color:#00ff88; font-size:12px;">${minutoAtual}' AO VIVO 🔴</div></div>
+    <div style="background:#111;color:#fff;padding:12px;border-radius:12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between">
+        <div><b>${j.casa}</b><br><b>${j.fora}</b></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:bold">${j.placar}</div><div style="color:#00ff88;font-size:13px">${atual}' AO VIVO 🔴</div></div>
       </div>
-      <a href="assistir.html?id=3nJN6ljCXHQ" style="background:#ff0000; color:white; padding:12px; border-radius:8px; text-decoration:none; display:block; text-align:center; font-weight:bold; margin-top:10px;">▶️ ASSISTIR DENTRO DO APP</a>
+      <a href="assistir.html?id=3nJN6ljCXHQ" style="background:#ff0000;color:#fff;padding:12px;border-radius:8px;display:block;text-align:center;font-weight:bold;margin-top:10px;text-decoration:none">▶️ ASSISTIR DENTRO DO APP</a>
     </div>`;
   });
 
-  divAoVivo.innerHTML = html;
-  divProx.innerHTML = `<p>✅ Ao vivo - Atualização a cada 30s<br><span style="color:#888;font-size:12px">Atualizado: ${new Date().toLocaleTimeString('pt-BR')}</span></p>`;
+  div.innerHTML = html;
+  div2.innerHTML = `✅ Atualizado: ${new Date().toLocaleTimeString('pt-BR')} - relogio correndo`;
 }
 
-carregar();
-setInterval(carregar, 30000); // busca placar novo a cada 30s
-setInterval(renderizar, 1000); // atualiza o relógio a cada 1s
-  
+buscar();
+setInterval(buscar, 15000); // busca placar novo a cada 15s
+setInterval(desenhar, 1000); // faz o contador andar a cada 1s
