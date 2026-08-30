@@ -1,48 +1,47 @@
-async function buscar() {
+async function atualizarPlacar() {
   const div = document.getElementById("jogos-ao-vivo");
-  try {
-    // adiciona ?v= pra nao pegar cache velho do GitHub
-    const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/bra.1/scoreboard?limit=20&v=${Date.now()}`);
-    const d = await r.json();
-    const aoVivo = d.events.filter(e => e.status.type.state === 'in');
 
-    if(aoVivo.length === 0){
-      div.innerHTML = "<p>⚽ Nenhum jogo ao vivo agora</p>";
-      return;
-    }
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/bra.1/scoreboard?${Date.now()}`);
+    const data = await res.json();
 
     let html = "";
-    const agora = new Date();
 
-    aoVivo.forEach(ev => {
-      const comp = ev.competitions[0];
-      const casa = comp.competitors[0];
-      const fora = comp.competitors[1];
-      
-      // CALCULA TEMPO REAL PELO HORARIO DE INICIO
-      const inicioJogo = new Date(ev.date);
-      let minutos = Math.floor((agora - inicioJogo) / 60000);
-      if(minutos < 0) minutos = 0;
-      if(minutos > 90) minutos = 90; // trava em 90
+    data.events.forEach(jogo => {
+      if (jogo.status.type.state !== 'in') return;
+
+      const casa = jogo.competitions[0].competitors[0];
+      const fora = jogo.competitions[0].competitors[1];
+      const periodo = jogo.status.period;
+      const tempo = jogo.status.type.detail;
+
+      let tempoTexto = tempo;
+      if (periodo === 1) tempoTexto = `${tempo} - 1ºT`;
+      if (periodo === 2) tempoTexto = `${tempo} - 2ºT`;
 
       html += `
-      <div style="background:#111;color:#fff;padding:12px;border-radius:12px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between">
-          <div><b>${casa.team.displayName}</b><br><b>${fora.team.displayName}</b></div>
-          <div style="text-align:right"><div style="font-size:18px;font-weight:bold">${casa.score} - ${fora.score}</div><div style="color:#00ff88;font-size:13px">${minutos}' AO VIVO 🔴</div></div>
-        </div>
-        <a href="assistir.html?id=3nJN6ljCXHQ" style="background:#ff0000;color:#fff;padding:12px;border-radius:8px;display:block;text-align:center;font-weight:bold;margin-top:10px;text-decoration:none">▶️ ASSISTIR DENTRO DO APP</a>
-      </div>`;
+        <div style="background:#121212; border:1px solid #333; color:#fff; padding:14px; border-radius:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:bold;">${casa.team.displayName} <span style="color:#aaa">${casa.score}</span></div>
+              <div style="font-weight:bold;">${fora.team.displayName} <span style="color:#aaa">${fora.score}</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:#00ff88; font-weight:bold;">${tempoTexto}</div>
+              <div style="color:#ff3b3b; font-size:11px;">● AO VIVO</div>
+            </div>
+          </div>
+          <a href="assistir.html?jogo=${jogo.id}" style="background:#E10600; color:#fff; display:block; text-align:center; padding:12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-top:12px;">
+            ▶️ ASSISTIR DENTRO DO APP
+          </a>
+        </div>`;
     });
 
-    div.innerHTML = html;
-    document.getElementById("proximos-jogos").innerHTML = `✅ Tempo real pelo relógio - ${agora.toLocaleTimeString('pt-BR')}`;
+    div.innerHTML = html || "<p style='color:#888'>Nenhum jogo ao vivo no momento</p>";
+    document.getElementById("proximos-jogos").innerHTML = `<p style="color:#666; font-size:12px;">Atualizado: ${new Date().toLocaleTimeString('pt-BR')}</p>`;
 
-  } catch(e){
-    document.getElementById("jogos-ao-vivo").innerHTML = "Erro: "+e.message;
-  }
+  } catch (e) {}
 }
 
-buscar();
-setInterval(buscar, 10000); // atualiza a cada 10 segundos
-          
+atualizarPlacar();
+setInterval(atualizarPlacar, 10000);
