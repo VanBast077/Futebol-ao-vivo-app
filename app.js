@@ -17,9 +17,8 @@ async function atualizarPlacar() {
 
       let tempoTexto = tempo;
 if (periodo === 1) tempoTexto = `${tempo} - 1ºT`;
-if (periodo === 2) {
-  tempoTexto = tempo === "90'" ? `90+ AO VIVO` : `${tempo} - 2ºT`;
-}
+if (periodo === 2) tempoTexto = tempo === "90'" ? `90+ AO VIVO` : `${tempo} - 2ºT`;
+if (tempo.includes("HT")) tempoTexto = `INTERVALO`;
 
       html += `
         <div style="background:#121212; border:1px solid #333; color:#fff; padding:14px; border-radius:12px; margin-bottom:12px;">
