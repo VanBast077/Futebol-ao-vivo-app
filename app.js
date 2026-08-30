@@ -16,8 +16,9 @@ async function atualizarPlacar() {
       const tempo = jogo.status.type.detail;
 
       let tempoTexto = tempo;
-      if (periodo === 1) tempoTexto = `${tempo} - 1ºT`;
-      if (periodo === 2) tempoTexto = `${tempo} - 2ºT`;
+if (periodo === 1) tempoTexto = `${tempo} - 1ºT`;
+if (periodo === 2) tempoTexto = tempo.includes("90") ? `90+ AO VIVO 🔴` : `${tempo} - 2ºT`;
+// se tiver nos acréscimos mostra 90+ senão mostra 2ºT
 
       html += `
         <div style="background:#121212; border:1px solid #333; color:#fff; padding:14px; border-radius:12px; margin-bottom:12px;">
