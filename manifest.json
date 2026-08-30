@@ -2,15 +2,15 @@
   "name": "Futebol ao Vivo",
   "short_name": "Futebol ao Vivo",
   "start_url": ".",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#0d47a1",
   "theme_color": "#0d47a1",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/1099/1099794.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
+  
